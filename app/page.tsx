@@ -1,11 +1,6 @@
+"use client";
+
 import React, { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Calculator, Percent, Target } from "lucide-react";
 
 function toNum(value: string): number | null {
   const n = Number(value);
@@ -138,7 +133,49 @@ function fitFirstGoalModel(homeOdds: number, drawOdds: number, awayOdds: number,
   return best;
 }
 
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ background: "#fff", border: "1px solid #ddd", borderRadius: 12, padding: 20 }}>
+      <h2 style={{ marginTop: 0, marginBottom: 16, fontSize: 20 }}>{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <label style={{ fontSize: 14, fontWeight: 600 }}>{label}</label>
+      <input
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ padding: "10px 12px", border: "1px solid #ccc", borderRadius: 8, fontSize: 14 }}
+      />
+    </div>
+  );
+}
+
+function StatBox({ label, value, dark = false }: { label: string; value: string; dark?: boolean }) {
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        padding: 16,
+        border: dark ? "none" : "1px solid #ddd",
+        background: dark ? "#111827" : "#fff",
+        color: dark ? "#fff" : "#111",
+      }}
+    >
+      <div style={{ fontSize: 12, textTransform: "uppercase", opacity: 0.7, marginBottom: 8 }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 700 }}>{value}</div>
+    </div>
+  );
+}
+
 export default function FairOddsBettingCalculator() {
+  const [tab, setTab] = useState<"combo" | "fhbtts" | "firstgoal">("combo");
+
   const [selection1, setSelection1] = useState("9.9");
   const [selection2, setSelection2] = useState("17.75");
   const [selection3, setSelection3] = useState("40");
@@ -256,264 +293,128 @@ export default function FairOddsBettingCalculator() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex items-center justify-between gap-4">
+    <div style={{ minHeight: "100vh", background: "#f3f4f6", padding: 24, fontFamily: "Arial, sans-serif" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 24 }}>
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Fair Odds Betting Calculator</h1>
-            <p className="mt-2 text-sm text-slate-600">
-              Build combo fair odds, estimate first-half BTTS from midpoint prices, and model team to score first from exchange data.
+            <h1 style={{ margin: 0, fontSize: 32 }}>Fair Odds Betting Calculator</h1>
+            <p style={{ color: "#555", marginTop: 8 }}>
+              Build combo fair odds, estimate first-half BTTS, and model team to score first from exchange data.
             </p>
           </div>
-          <Button variant="outline" onClick={resetExample}>Reset example</Button>
+          <button onClick={resetExample} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ccc", cursor: "pointer" }}>
+            Reset example
+          </button>
         </div>
 
-        <Tabs defaultValue="combo" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-2xl">
-            <TabsTrigger value="combo">Combo builder</TabsTrigger>
-            <TabsTrigger value="fhbtts">1H BTTS xG model</TabsTrigger>
-            <TabsTrigger value="firstgoal">Team to score first (model)</TabsTrigger>
-          </TabsList>
+        <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+          <button onClick={() => setTab("combo")} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ccc", background: tab === "combo" ? "#111827" : "#fff", color: tab === "combo" ? "#fff" : "#111", cursor: "pointer" }}>Combo builder</button>
+          <button onClick={() => setTab("fhbtts")} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ccc", background: tab === "fhbtts" ? "#111827" : "#fff", color: tab === "fhbtts" ? "#fff" : "#111", cursor: "pointer" }}>1H BTTS xG model</button>
+          <button onClick={() => setTab("firstgoal")} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ccc", background: tab === "firstgoal" ? "#111827" : "#fff", color: tab === "firstgoal" ? "#fff" : "#111", cursor: "pointer" }}>Team to score first</button>
+        </div>
 
-          <TabsContent value="combo">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card className="rounded-2xl shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Calculator className="h-5 w-5" /> Combined fair odds</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label>Selection 1 odds</Label>
-                      <Input value={selection1} onChange={(e) => setSelection1(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Selection 2 odds</Label>
-                      <Input value={selection2} onChange={(e) => setSelection2(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Selection 3 odds</Label>
-                      <Input value={selection3} onChange={(e) => setSelection3(e.target.value)} />
-                    </div>
+        {tab === "combo" && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+            <Card title="Combined fair odds">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+                <Field label="Selection 1 odds" value={selection1} onChange={setSelection1} />
+                <Field label="Selection 2 odds" value={selection2} onChange={setSelection2} />
+                <Field label="Selection 3 odds" value={selection3} onChange={setSelection3} />
+              </div>
+              <p style={{ marginTop: 16, color: "#555" }}>Enter decimal odds for each scoreline or selection. The app sums implied probabilities and converts back to a fair combined price.</p>
+            </Card>
+
+            <Card title="Results">
+              <div style={{ display: "grid", gap: 10 }}>
+                {combo.odds.map((odd, idx) => (
+                  <div key={idx} style={{ display: "flex", justifyContent: "space-between", background: "#f3f4f6", padding: 12, borderRadius: 10 }}>
+                    <span>Selection {idx + 1}</span>
+                    <span>Prob {fmt(combo.probs[idx] * 100)}%</span>
                   </div>
-                  <p className="text-sm text-slate-600">Enter decimal odds for each scoreline or selection. The app sums implied probabilities and converts back to a fair combined price.</p>
-                </CardContent>
-              </Card>
+                ))}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginTop: 20 }}>
+                <StatBox label="Combined probability" value={`${fmt(combo.totalProb * 100)}%`} dark />
+                <StatBox label="Fair odds" value={combo.fair ? fmt(combo.fair) : "-"} />
+              </div>
+            </Card>
+          </div>
+        )}
 
-              <Card className="rounded-2xl shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Percent className="h-5 w-5" /> Results</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-3 text-sm">
-                    {combo.odds.map((odd, idx) => (
-                      <div key={idx} className="flex items-center justify-between rounded-xl bg-slate-100 px-4 py-3">
-                        <span>Selection {idx + 1}</span>
-                        <span>Prob {fmt(combo.probs[idx] * 100)}%</span>
-                      </div>
-                    ))}
+        {tab === "fhbtts" && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+            <Card title="Inputs">
+              <div style={{ marginBottom: 18, fontWeight: 600 }}>First-half goal line mids</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
+                <Field label="Over 0.5" value={ov05} onChange={setOv05} />
+                <Field label="Over 1.5" value={ov15} onChange={setOv15} />
+                <Field label="Over 2.5" value={ov25} onChange={setOv25} />
+              </div>
+
+              <div style={{ marginBottom: 18, fontWeight: 600 }}>Half-time 1X2 mids</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+                <Field label="HT Home" value={htHome} onChange={setHtHome} />
+                <Field label="HT Draw" value={htDraw} onChange={setHtDraw} />
+                <Field label="HT Away" value={htAway} onChange={setHtAway} />
+              </div>
+            </Card>
+
+            <Card title="Model output">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 12 }}>
+                <StatBox label="1H total xG" value={fmt(firstHalf.totalLambda, 3)} />
+                <StatBox label="Home 1H xG" value={fmt(firstHalf.home1H, 3)} />
+                <StatBox label="Away 1H xG" value={fmt(firstHalf.away1H, 3)} />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+                <StatBox label="BTTS first half probability" value={`${fmt(firstHalf.prob * 100)}%`} dark />
+                <StatBox label="Fair odds" value={firstHalf.fair ? fmt(firstHalf.fair) : "-"} />
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {tab === "firstgoal" && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+            <Card title="Inputs (mid prices)">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
+                <Field label="Home" value={fgHomeOdds} onChange={setFgHomeOdds} />
+                <Field label="Draw" value={fgDrawOdds} onChange={setFgDrawOdds} />
+                <Field label="Away" value={fgAwayOdds} onChange={setFgAwayOdds} />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+                <Field label="0-0" value={fg00} onChange={setFg00} />
+                <Field label="BTTS Yes (optional)" value={fgBTTS} onChange={setFgBTTS} placeholder="Optional" />
+              </div>
+              <p style={{ marginTop: 16, color: "#555" }}>Uses W/D/W and 0-0 to fit home and away xG, then prices home first, away first, and no goal. BTTS is an optional refinement.</p>
+            </Card>
+
+            <Card title="Model output">
+              {!firstGoal.ready ? (
+                <div style={{ background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 10, padding: 14 }}>
+                  {firstGoal.message}
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 12 }}>
+                    <StatBox label="Home xG" value={fmt(firstGoal.lh, 3)} />
+                    <StatBox label="Away xG" value={fmt(firstGoal.la, 3)} />
+                    <StatBox label="No-goal probability" value={`${fmt(firstGoal.noGoalProb * 100)}%`} />
                   </div>
-                  <Separator />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl bg-slate-900 p-4 text-white">
-                      <div className="text-xs uppercase tracking-wide text-slate-300">Combined probability</div>
-                      <div className="mt-2 text-3xl font-semibold">{fmt(combo.totalProb * 100)}%</div>
-                    </div>
-                    <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                      <div className="text-xs uppercase tracking-wide text-slate-500">Fair odds</div>
-                      <div className="mt-2 text-3xl font-semibold">{combo.fair ? fmt(combo.fair) : "-"}</div>
-                    </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 12 }}>
+                    <StatBox label="Home scores first" value={`${fmt(firstGoal.homeFirstProb * 100)}%`} dark />
+                    <StatBox label="Away scores first" value={`${fmt(firstGoal.awayFirstProb * 100)}%`} dark />
+                    <StatBox label="Model BTTS" value={`${fmt(firstGoal.bttsProb * 100)}%`} />
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="fhbtts">
-            <div className="grid gap-6 lg:grid-cols-2">
-              <Card className="rounded-2xl shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Inputs</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <div className="mb-3 text-sm font-medium text-slate-700">First-half goal line mids</div>
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      <div className="space-y-2">
-                        <Label>Over 0.5</Label>
-                        <Input value={ov05} onChange={(e) => setOv05(e.target.value)} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Over 1.5</Label>
-                        <Input value={ov15} onChange={(e) => setOv15(e.target.value)} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Over 2.5</Label>
-                        <Input value={ov25} onChange={(e) => setOv25(e.target.value)} />
-                      </div>
-                    </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+                    <StatBox label="Fair home first odds" value={firstGoal.fairHome ? fmt(firstGoal.fairHome) : "-"} />
+                    <StatBox label="Fair away first odds" value={firstGoal.fairAway ? fmt(firstGoal.fairAway) : "-"} />
+                    <StatBox label="Fair no-goal odds" value={firstGoal.fairNoGoal ? fmt(firstGoal.fairNoGoal) : "-"} />
                   </div>
-
-                  <div>
-                    <div className="mb-3 text-sm font-medium text-slate-700">Half-time 1X2 mids</div>
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      <div className="space-y-2">
-                        <Label>HT Home</Label>
-                        <Input value={htHome} onChange={(e) => setHtHome(e.target.value)} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>HT Draw</Label>
-                        <Input value={htDraw} onChange={(e) => setHtDraw(e.target.value)} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>HT Away</Label>
-                        <Input value={htAway} onChange={(e) => setHtAway(e.target.value)} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-sm text-slate-600">
-                    The model infers first-half total xG from the goal lines, then splits that total between the teams using HT 1X2.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-2xl shadow-sm">
-                <CardHeader>
-                  <CardTitle>Model output</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                      <div className="text-xs uppercase tracking-wide text-slate-500">1H total xG</div>
-                      <div className="mt-2 text-2xl font-semibold">{fmt(firstHalf.totalLambda, 3)}</div>
-                    </div>
-                    <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                      <div className="text-xs uppercase tracking-wide text-slate-500">Home 1H xG</div>
-                      <div className="mt-2 text-2xl font-semibold">{fmt(firstHalf.home1H, 3)}</div>
-                    </div>
-                    <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                      <div className="text-xs uppercase tracking-wide text-slate-500">Away 1H xG</div>
-                      <div className="mt-2 text-2xl font-semibold">{fmt(firstHalf.away1H, 3)}</div>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl bg-slate-900 p-4 text-white">
-                      <div className="text-xs uppercase tracking-wide text-slate-300">BTTS first half probability</div>
-                      <div className="mt-2 text-3xl font-semibold">{fmt(firstHalf.prob * 100)}%</div>
-                    </div>
-                    <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                      <div className="text-xs uppercase tracking-wide text-slate-500">Fair odds</div>
-                      <div className="mt-2 text-3xl font-semibold">{firstHalf.fair ? fmt(firstHalf.fair) : "-"}</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="firstgoal">
-            <div className="grid gap-6 lg:grid-cols-2">
-              <Card className="rounded-2xl shadow-sm">
-                <CardHeader>
-                  <CardTitle>Inputs (mid prices)</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label>Home</Label>
-                      <Input value={fgHomeOdds} onChange={(e) => setFgHomeOdds(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Draw</Label>
-                      <Input value={fgDrawOdds} onChange={(e) => setFgDrawOdds(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Away</Label>
-                      <Input value={fgAwayOdds} onChange={(e) => setFgAwayOdds(e.target.value)} />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>0-0</Label>
-                      <Input value={fg00} onChange={(e) => setFg00(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>BTTS Yes (optional)</Label>
-                      <Input value={fgBTTS} onChange={(e) => setFgBTTS(e.target.value)} placeholder="Optional" />
-                    </div>
-                  </div>
-
-                  <p className="text-sm text-slate-600">
-                    This tab uses W/D/W and 0-0 to fit home and away xG, then prices home first, away first, and no goal. BTTS is optional and only acts as a refinement.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-2xl shadow-sm">
-                <CardHeader>
-                  <CardTitle>Model output</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {!firstGoal.ready ? (
-                    <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200">
-                      {firstGoal.message}
-                    </div>
-                  ) : (
-                    <>
-                      <div className="grid gap-3 sm:grid-cols-3">
-                        <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                          <div className="text-xs uppercase tracking-wide text-slate-500">Home xG</div>
-                          <div className="mt-2 text-2xl font-semibold">{fmt(firstGoal.lh, 3)}</div>
-                        </div>
-                        <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                          <div className="text-xs uppercase tracking-wide text-slate-500">Away xG</div>
-                          <div className="mt-2 text-2xl font-semibold">{fmt(firstGoal.la, 3)}</div>
-                        </div>
-                        <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                          <div className="text-xs uppercase tracking-wide text-slate-500">No-goal probability</div>
-                          <div className="mt-2 text-2xl font-semibold">{fmt(firstGoal.noGoalProb * 100)}%</div>
-                        </div>
-                      </div>
-
-                      <div className="grid gap-3 sm:grid-cols-3">
-                        <div className="rounded-2xl bg-slate-900 p-4 text-white">
-                          <div className="text-xs uppercase tracking-wide text-slate-300">Home scores first</div>
-                          <div className="mt-2 text-2xl font-semibold">{fmt(firstGoal.homeFirstProb * 100)}%</div>
-                        </div>
-                        <div className="rounded-2xl bg-slate-900 p-4 text-white">
-                          <div className="text-xs uppercase tracking-wide text-slate-300">Away scores first</div>
-                          <div className="mt-2 text-2xl font-semibold">{fmt(firstGoal.awayFirstProb * 100)}%</div>
-                        </div>
-                        <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                          <div className="text-xs uppercase tracking-wide text-slate-500">Model BTTS</div>
-                          <div className="mt-2 text-2xl font-semibold">{fmt(firstGoal.bttsProb * 100)}%</div>
-                        </div>
-                      </div>
-
-                      <div className="grid gap-3 sm:grid-cols-3">
-                        <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                          <div className="text-xs uppercase tracking-wide text-slate-500">Fair home first odds</div>
-                          <div className="mt-2 text-3xl font-semibold">{firstGoal.fairHome ? fmt(firstGoal.fairHome) : "-"}</div>
-                        </div>
-                        <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                          <div className="text-xs uppercase tracking-wide text-slate-500">Fair away first odds</div>
-                          <div className="mt-2 text-3xl font-semibold">{firstGoal.fairAway ? fmt(firstGoal.fairAway) : "-"}</div>
-                        </div>
-                        <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                          <div className="text-xs uppercase tracking-wide text-slate-500">Fair no-goal odds</div>
-                          <div className="mt-2 text-3xl font-semibold">{firstGoal.fairNoGoal ? fmt(firstGoal.fairNoGoal) : "-"}</div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+                </>
+              )}
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
